@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Authorization Received</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="card">
+  <div id="ok" hidden>
+    <h1>✅ Authorization received</h1>
+    <p><strong>Copy the link below and send it to your developer right away.</strong> It expires in about 5 minutes.</p>
+    <p class="timer">Time left: <span id="timer">5:00</span></p>
+    <textarea id="url" readonly rows="4"></textarea>
+    <button id="copy">Copy link</button>
+    <p id="copied" class="muted" hidden>Copied! Paste it into your message to your developer.</p>
+    <details>
+      <summary>Details</summary>
+      <p class="muted">Selling partner ID: <code id="spid"></code></p>
+    </details>
+  </div>
+  <div id="expired" hidden>
+    <h1>⏱️ Link expired</h1>
+    <p>Please ask your developer for a new authorization link and try again.</p>
+  </div>
+  <div id="err" hidden>
+    <h1>⚠️ Authorization was not completed</h1>
+    <p id="errmsg"></p>
+    <p class="muted">Please contact your developer.</p>
+  </div>
+</main>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var code = q.get('spapi_oauth_code');
+  if (!code) {
+    document.getElementById('errmsg').textContent =
+      q.get('error_description') || q.get('error') || 'No authorization code was found in this link.';
+    document.getElementById('err').hidden = false;
+    return;
+  }
+  document.getElementById('ok').hidden = false;
+  document.getElementById('url').value = location.href;
+  document.getElementById('spid').textContent = q.get('selling_partner_id') || '(not provided)';
+
+  document.getElementById('copy').onclick = function () {
+    var box = document.getElementById('url');
+    var done = function () { document.getElementById('copied').hidden = false; };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(box.value).then(done, function () { box.select(); document.execCommand('copy'); done(); });
+    } else { box.select(); document.execCommand('copy'); done(); }
+  };
+
+  var left = 300, t = document.getElementById('timer');
+  var iv = setInterval(function () {
+    left--;
+    if (left <= 0) {
+      clearInterval(iv);
+      document.getElementById('ok').hidden = true;
+      document.getElementById('expired').hidden = false;
+      return;
+    }
+    t.textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0');
+  }, 1000);
+})();
+</script>
+</body>
+</html>
